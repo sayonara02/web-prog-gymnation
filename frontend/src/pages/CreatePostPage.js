@@ -115,7 +115,7 @@ const CreatePostPage = () => {
         formData.append('image', imageUrl.trim());
       }
 
-      const response = await axiosInstance.post('/posts', formData, {
+      await axiosInstance.post('/posts', formData, {
         headers: {
           'Content-Type': undefined,
         },

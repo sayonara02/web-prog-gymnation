@@ -234,6 +234,7 @@ function Minigame() {
   };
 
   // Setup event listeners
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space' || e.key === ' ' || e.key === 'ArrowUp') {

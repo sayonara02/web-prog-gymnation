@@ -99,10 +99,10 @@ function About() {
       <section className="content-section">
         <h2>Join Our Movement</h2>
         <p>PrideFit is more than a business—it's a testament to what happens when we center marginalized voices in wellness. We're growing, with plans to open three new locations by 2027 and developing online resources for those without local inclusive gyms.</p>
-        <div className="cta-buttons">
-          <a href="#" className="cta-button">Become a Member</a>
-          <a href="#" className="cta-button secondary">Volunteer With Us</a>
-        </div>
+         <div className="cta-buttons">
+           <button className="cta-button" onClick={() => window.location.href = '/register'}>Become a Member</button>
+           <button className="cta-button secondary" onClick={() => window.location.href = '/contact'}>Volunteer With Us</button>
+         </div>
       </section>
     </main>
   );

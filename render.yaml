@@ -1,0 +1,54 @@
+# Render Deployment Configuration for Backend
+# This configuration deploys the backend as a Web Service
+
+services:
+  - type: web
+    name: pridefit-backend
+    env: node
+    plan: free  # Change to paid plan for production
+    
+    # Build command - install dependencies
+    buildCommand: |
+      cd backend
+      npm ci --only=production
+      
+    # Start command
+    startCommand: |
+      cd backend
+      npm start
+    
+    # Environment variables (set these in Render dashboard)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: pridefit-mongodb
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://pridefit.vercel.app  # Change to your Vercel frontend URL
+      - key: BASE_URL
+        value: https://pridefit-backend.onrender.com  # Your Render backend URL
+      # Uncomment and configure if using Cloudinary for file uploads:
+      # - key: CLOUDINARY_CLOUD_NAME
+      #   value: your-cloud-name
+      # - key: CLOUDINARY_API_KEY
+      #   value: your-api-key
+      # - key: CLOUDINARY_API_SECRET
+      #   value: your-api-secret
+    
+    # Health check endpoint
+    healthCheckPath: /api/auth/me
+    
+    # Auto-deploy from Git
+    autoDeploy: true
+
+# Optional: MongoDB Atlas (you can also use separate Atlas instance)
+# databases:
+#   - name: pridefit-mongodb
+#     plan: free
+#     provider: mongodb

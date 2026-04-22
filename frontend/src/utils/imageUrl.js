@@ -1,6 +1,6 @@
 /**
  * Utility to construct full image URL for uploaded files
- * Backend serves uploads at: http://localhost:5000/uploads/...
+ * Backend serves uploads at: [API_URL]/uploads/...
  */
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
@@ -13,9 +13,8 @@ export const getImageUrl = (imagePath) => {
     return path;
   }
 
-  // Otherwise, construct full URL for local uploads
-  const BACKEND_URL = 'http://localhost:5000';
-  // Ensure we don't double slash
+  // Otherwise, construct full URL using environment variable or default
+  const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${BACKEND_URL}${cleanPath}`;
+  return `${baseUrl}${cleanPath}`;
 };

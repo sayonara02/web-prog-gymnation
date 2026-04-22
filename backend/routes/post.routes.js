@@ -4,8 +4,7 @@ const Post = require('../models/Post');
 const Comment = require('../models/Comment');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth.middleware');
-const { uploadPost } = require('../utils/upload');
-const fs = require('fs');
+const { uploadPost, deleteFile } = require('../utils/upload');
 const path = require('path');
 
 // @GET    /api/posts
@@ -90,7 +89,7 @@ router.get('/:id', async (req, res) => {
 
 // @POST   /api/posts
 // Create a new post with optional image upload
-router.post('/', protect, uploadPost.single('image'), async (req, res) => {
+router.post('/', protect, uploadPost, async (req, res) => {
   try {
     const { description } = req.body;
 
@@ -101,20 +100,20 @@ router.post('/', protect, uploadPost.single('image'), async (req, res) => {
       });
     }
 
-    // Handle image - either uploaded file or URL from body
-    let imagePath = '';
-    if (req.file) {
-      // File uploaded - store relative path
-      imagePath = `/uploads/posts/${req.file.filename}`;
-    } else if (req.body.image) {
-      // URL provided in body
-      imagePath = req.body.image;
+    // Handle image - either uploaded file (local or Cloudinary) or URL from body
+    let image = '';
+    if (req.body.image) {
+      // Cloudinary URL (from middleware) or direct URL
+      image = req.body.image;
+    } else if (req.file) {
+      // Local file - construct path
+      image = `/uploads/posts/${req.file.filename}`;
     }
 
     const post = await Post.create({
       user: req.user._id,
       description: description.trim(),
-      image: imagePath,
+      image: image,
     });
 
     // Populate user info for response
@@ -173,12 +172,9 @@ router.delete('/:id', protect, async (req, res) => {
     // Delete associated comments
     await Comment.deleteMany({ post: post._id });
 
-    // Delete uploaded image file if exists
-    if (post.image && !post.image.startsWith('http')) {
-      const imagePath = path.join(__dirname, '..', post.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
+    // Delete uploaded image if exists using helper
+    if (post.image) {
+      await deleteFile(post.image);
     }
 
     // Delete post

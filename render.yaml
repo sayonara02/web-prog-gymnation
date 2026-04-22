@@ -1,49 +1,39 @@
 # Render Deployment Configuration for Backend
-# This configuration deploys the backend as a Web Service
+# Deploys backend as a Web Service
 
 services:
   - type: web
     name: pridefit-backend
     env: node
-    plan: free  # Change to paid plan for production
-    root: ./backend
+    plan: free
     
-    # Build command - install dependencies
-    buildCommand: npm ci --omit=dev
+    # Build: install all dependencies (including dev for building)
+    buildCommand: "cd backend && npm install"
     
-    # Start command
-    startCommand: npm start
+    # Start: run production server
+    startCommand: "cd backend && npm start"
     
-    # Environment variables (set these in Render dashboard)
+    healthCheckPath: /
+    autoDeploy: true
+    
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-      - key: MONGODB_URI
-        value: mongodb+srv://<username>:<password>@cluster.mongodb.net/pridefitgym?retryWrites=true&w=majority
-      - key: JWT_SECRET
-        generateValue: true
-      - key: CORS_ORIGIN
-        value: https://pridefit.vercel.app  # Change to your Vercel frontend URL
-      - key: BASE_URL
-        value: https://pridefit-backend.onrender.com  # Your Render backend URL
-      # Uncomment and configure if using Cloudinary for file uploads:
+      # Set these in Render dashboard (do not commit secrets):
+      # - key: MONGODB_URI
+      #   value: mongodb+srv://<user>:<pass>@cluster.mongodb.net/pridefitgym?retryWrites=true&w=majority
+      # - key: JWT_SECRET
+      #   generateValue: true
+      # - key: CORS_ORIGIN
+      #   value: https://your-app.vercel.app
+      # - key: BASE_URL
+      #   value: https://your-backend.onrender.com
+      # Optional: Cloudinary for persistent file storage
       # - key: CLOUDINARY_CLOUD_NAME
       #   value: your-cloud-name
       # - key: CLOUDINARY_API_KEY
       #   value: your-api-key
       # - key: CLOUDINARY_API_SECRET
       #   value: your-api-secret
-    
-    # Health check endpoint (public route)
-    healthCheckPath: /
-    
-    # Auto-deploy from Git
-    autoDeploy: true
-
-# Optional: MongoDB Atlas (you can also use separate Atlas instance)
-# databases:
-#   - name: pridefit-mongodb
-#     plan: free
-#     provider: mongodb

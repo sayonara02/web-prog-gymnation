@@ -266,10 +266,11 @@ function Minigame() {
       if (gameScreen) {
         gameScreen.removeEventListener('click', handleScreenClick);
       }
-      if (gameLoopRef.current) clearInterval(gameLoopRef.current);
-      if (obstacleIntervalRef.current) clearInterval(obstacleIntervalRef.current);
-    };
-  }, []);
+       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
+       if (obstacleIntervalRef.current) clearInterval(obstacleIntervalRef.current);
+     };
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
 
   return (
     <div className="game-wrapper">

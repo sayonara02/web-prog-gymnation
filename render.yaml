@@ -6,16 +6,13 @@ services:
     name: pridefit-backend
     env: node
     plan: free  # Change to paid plan for production
+    root: ./backend
     
     # Build command - install dependencies
-    buildCommand: |
-      cd backend
-      npm ci --only=production
-      
+    buildCommand: npm ci --omit=dev
+    
     # Start command
-    startCommand: |
-      cd backend
-      npm start
+    startCommand: npm start
     
     # Environment variables (set these in Render dashboard)
     envVars:
@@ -24,9 +21,7 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        fromDatabase:
-          name: pridefit-mongodb
-          property: connectionString
+        value: mongodb+srv://<username>:<password>@cluster.mongodb.net/pridefitgym?retryWrites=true&w=majority
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
@@ -41,8 +36,8 @@ services:
       # - key: CLOUDINARY_API_SECRET
       #   value: your-api-secret
     
-    # Health check endpoint
-    healthCheckPath: /api/auth/me
+    # Health check endpoint (public route)
+    healthCheckPath: /
     
     # Auto-deploy from Git
     autoDeploy: true

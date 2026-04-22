@@ -59,7 +59,7 @@ A full-stack social fitness platform for sharing workout progress, connecting wi
 - **React Router v6** – Client-side routing
 - **Axios** – HTTP client
 - **CSS3** – Styling with modern features
-- **Vite** – Build tool
+- **Create React App** – Build tool
 
 ### Backend
 - **Node.js** – Runtime environment
@@ -128,7 +128,7 @@ PRIDEFITGYM/
 │   │   ├── App.css          # Global styles
 │   │   └── index.js         # Entry point
 │   ├── package.json
-│   └── vite.config.js
+│   └── .env.example
 │
 ├── .gitignore
 └── README.md

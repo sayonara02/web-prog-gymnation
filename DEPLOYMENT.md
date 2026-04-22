@@ -77,7 +77,7 @@ REACT_APP_API_URL=https://your-backend.onrender.com/api
 4. Configure:
    - **Name:** `pridefit-backend` (or your choice)
    - **Environment:** Node
-   - **Build Command:** `cd backend && npm ci --only=production`
+    - **Build Command:** `cd backend && npm install --production`
    - **Start Command:** `cd backend && npm start`
    - **Plan:** Free (or paid for production)
 5. Add environment variables from Step 1
@@ -220,7 +220,7 @@ Then update environment variables:
 
 ### Build Fails on Render
 - Ensure `backend/package-lock.json` is committed
-- Check build command syntax: `cd backend && npm ci --only=production`
+- Check build command syntax: `cd backend && npm install --production`
 - View build logs in Render dashboard for specific error
 
 ### File Upload Errors (500)

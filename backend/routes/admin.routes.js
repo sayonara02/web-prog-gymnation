@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Comment = require('../models/Comment');
+const Contact = require('../models/Contact');
 const { protect, admin } = require('../middleware/auth.middleware');
 
 // @GET    /api/admin/users
@@ -139,4 +141,139 @@ router.delete('/users/:id', protect, admin, async (req, res) => {
   }
 });
 
+// @GET    /api/admin/posts
+// Get all posts with user info (admin only)
+router.get('/posts', protect, admin, async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .populate('user', 'name email profilePic')
+      .sort({ createdAt: -1 });
+    res.json({ success: true, posts });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message,
+    });
+  }
+});
+
+// @DELETE /api/admin/posts/:id
+// Delete post (admin only)
+router.delete('/posts/:id', protect, admin, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found',
+      });
+    }
+
+    await post.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Post deleted successfully',
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message,
+    });
+  }
+});
+
+// @GET    /api/admin/contacts
+// Get all contact messages (admin only)
+router.get('/contacts', protect, admin, async (req, res) => {
+  try {
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+    res.json({ success: true, contacts });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message,
+    });
+  }
+});
+
+// @PUT    /api/admin/contacts/:id/status
+// Update contact message status (admin only)
+router.put('/contacts/:id/status', protect, admin, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!['new', 'read', 'replied', 'archived'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status',
+      });
+    }
+
+    const updateData = { status };
+    if (status === 'replied') {
+      updateData.repliedBy = req.user._id;
+      updateData.repliedAt = new Date();
+    }
+
+    const contact = await Contact.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!contact) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contact message not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Contact status updated successfully',
+      contact,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message,
+    });
+  }
+});
+
+// @DELETE /api/admin/contacts/:id
+// Delete contact message (admin only)
+router.delete('/contacts/:id', protect, admin, async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+
+    if (!contact) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contact message not found',
+      });
+    }
+
+    await contact.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Contact message deleted successfully',
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message,
+    });
+  }
+});
+
 module.exports = router;
+

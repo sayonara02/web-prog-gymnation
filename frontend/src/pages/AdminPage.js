@@ -1,37 +1,56 @@
 import { useState, useEffect } from 'react';
 import axiosInstance from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import './AdminPage.css';
 
 const AdminPage = () => {
   const { user, logout } = useAuth();
-  const [users, setUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState('users');
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState({ text: '', type: '' });
 
+  // Data states
+  const [users, setUsers] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [contacts, setContacts] = useState([]);
+
+  // Fetch all data on component mount
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const res = await axiosInstance.get('/admin/users');
-      setUsers(res.data.users);
+      const [usersRes, postsRes, contactsRes] = await Promise.all([
+        axiosInstance.get('/admin/users'),
+        axiosInstance.get('/admin/posts'),
+        axiosInstance.get('/admin/contacts'),
+      ]);
+      setUsers(usersRes.data.users);
+      setPosts(postsRes.data.posts);
+      setContacts(contactsRes.data.contacts);
     } catch (err) {
-      console.error('Error fetching users:', err);
-      setMessage('Failed to load users');
+      console.error('Error fetching admin data:', err);
+      setMessage({ text: 'Failed to load data', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
+  const showMessage = (text, type = 'success') => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+  };
+
+  // User actions
   const handleRoleChange = async (userId, newRole) => {
     try {
       await axiosInstance.put(`/admin/users/${userId}/role`, { role: newRole });
       setUsers(users.map((u) => (u._id === userId ? { ...u, role: newRole } : u)));
-      setMessage('User role updated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      showMessage('User role updated!');
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to update role');
+      showMessage(err.response?.data?.message || 'Failed to update role', 'error');
     }
   };
 
@@ -39,25 +58,54 @@ const AdminPage = () => {
     try {
       await axiosInstance.put(`/admin/users/${userId}/status`, { status: newStatus });
       setUsers(users.map((u) => (u._id === userId ? { ...u, status: newStatus } : u)));
-      setMessage('User status updated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      showMessage('User status updated!');
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to update status');
+      showMessage(err.response?.data?.message || 'Failed to update status', 'error');
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user? This will also delete all their posts and comments.')) {
-      return;
-    }
-
+    if (!window.confirm('Delete this user? All their posts & comments will be permanently removed.')) return;
     try {
       await axiosInstance.delete(`/admin/users/${userId}`);
       setUsers(users.filter((u) => u._id !== userId));
-      setMessage('User deleted successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      showMessage('User deleted!');
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to delete user');
+      showMessage(err.response?.data?.message || 'Failed to delete user', 'error');
+    }
+  };
+
+  // Post actions
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('Delete this post permanently?')) return;
+    try {
+      await axiosInstance.delete(`/admin/posts/${postId}`);
+      setPosts(posts.filter((p) => p._id !== postId));
+      showMessage('Post deleted!');
+    } catch (err) {
+      showMessage(err.response?.data?.message || 'Failed to delete post', 'error');
+    }
+  };
+
+  // Contact actions
+  const handleUpdateContactStatus = async (contactId, status) => {
+    try {
+      await axiosInstance.put(`/admin/contacts/${contactId}/status`, { status });
+      setContacts(contacts.map((c) => (c._id === contactId ? { ...c, status } : c)));
+      showMessage('Contact status updated!');
+    } catch (err) {
+      showMessage(err.response?.data?.message || 'Failed to update status', 'error');
+    }
+  };
+
+  const handleDeleteContact = async (contactId) => {
+    if (!window.confirm('Delete this contact message?')) return;
+    try {
+      await axiosInstance.delete(`/admin/contacts/${contactId}`);
+      setContacts(contacts.filter((c) => c._id !== contactId));
+      showMessage('Contact deleted!');
+    } catch (err) {
+      showMessage(err.response?.data?.message || 'Failed to delete contact', 'error');
     }
   };
 
@@ -67,137 +115,282 @@ const AdminPage = () => {
   };
 
   if (loading) {
-    return <div>Loading users...</div>;
+    return (
+      <div className="admin-loading">
+        <div className="spinner"></div>
+        <p>Loading dashboard...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="admin-page" style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Admin Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: '10px 20px',
-            background: '#ff6b6b',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
-        >
+    <div className="admin-dashboard">
+      {/* Header */}
+      <div className="admin-header">
+        <div className="admin-header-left">
+          <h1>Admin Dashboard</h1>
+          <p className="admin-subtitle">Welcome back, {user?.name}. Manage your platform.</p>
+        </div>
+        <button onClick={handleLogout} className="admin-logout-btn">
           Logout
         </button>
       </div>
 
-      {message && (
-        <p
-          style={{
-            color: message.includes('success') || message.includes('updated') || message.includes('deleted') ? 'green' : 'red',
-            padding: '10px',
-            background: message.includes('success') || message.includes('updated') || message.includes('deleted') ? '#d4edda' : '#f8d7da',
-            borderRadius: '5px',
-            marginBottom: '15px',
-          }}
-        >
-          {message}
-        </p>
+      {/* Alert Message */}
+      {message.text && (
+        <div className={`admin-alert admin-alert-${message.type}`}>
+          <span>{message.text}</span>
+          <button onClick={() => setMessage({ text: '', type: '' })}>✕</button>
+        </div>
       )}
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#4ecdc4', color: 'white' }}>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Name</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Role</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Status</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u._id} style={{ borderBottom: '1px solid #ddd' }}>
-                <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: '#4ecdc4',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: '10px',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {u.profilePic ? (
-                        <img src={u.profilePic} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span>{u.name?.charAt(0)?.toUpperCase() || 'U'}</span>
-                      )}
-                    </div>
-                    {u.name}
-                  </div>
-                </td>
-                <td style={{ padding: '12px' }}>{u.email}</td>
-                <td style={{ padding: '12px' }}>
-                  <select
-                    value={u.role}
-                    onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                    disabled={u._id === user?._id}
-                    style={{
-                      padding: '5px',
-                      borderRadius: '4px',
-                      border: '1px solid #ddd',
-                      background: u._id === user?._id ? '#ccc' : 'white',
-                    }}
-                  >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-                <td style={{ padding: '12px' }}>
-                  <select
-                    value={u.status}
-                    onChange={(e) => handleStatusChange(u._id, e.target.value)}
-                    disabled={u._id === user?._id}
-                    style={{
-                      padding: '5px',
-                      borderRadius: '4px',
-                      border: '1px solid #ddd',
-                      background: u._id === user?._id ? '#ccc' : 'white',
-                    }}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </td>
-                <td style={{ padding: '12px' }}>
-                  {u._id !== user?._id && (
-                    <button
-                      onClick={() => handleDeleteUser(u._id)}
-                      style={{
-                        padding: '5px 10px',
-                        background: '#ff6b6b',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Stats Cards */}
+      <div className="admin-stats">
+        <div className="stat-card">
+          <div className="stat-icon">👥</div>
+          <div className="stat-info">
+            <span className="stat-value">{users.length}</span>
+            <span className="stat-label">Total Users</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">📝</div>
+          <div className="stat-info">
+            <span className="stat-value">{posts.length}</span>
+            <span className="stat-label">Total Posts</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">📧</div>
+          <div className="stat-info">
+            <span className="stat-value">{contacts.length}</span>
+            <span className="stat-label">Messages</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">🔔</div>
+          <div className="stat-info">
+            <span className="stat-value">{contacts.filter(c => c.status === 'new').length}</span>
+            <span className="stat-label">New Messages</span>
+          </div>
+        </div>
       </div>
 
-      {users.length === 0 && <p style={{ marginTop: '20px' }}>No users found.</p>}
+      {/* Tabs Navigation */}
+      <div className="admin-tabs">
+        <button
+          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+          onClick={() => setActiveTab('users')}
+        >
+          👥 Users
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'posts' ? 'active' : ''}`}
+          onClick={() => setActiveTab('posts')}
+        >
+          📝 Posts
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'contacts' ? 'active' : ''}`}
+          onClick={() => setActiveTab('contacts')}
+        >
+          📧 Messages
+        </button>
+      </div>
+
+      {/* Tab Panels */}
+      <div className="admin-content">
+        {/* USERS TAB */}
+        {activeTab === 'users' && (
+          <div className="tab-panel">
+            <div className="table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u._id}>
+                      <td>
+                        <div className="user-cell">
+                          <div className="user-avatar">
+                            {u.profilePic ? (
+                              <img src={u.profilePic} alt={u.name} />
+                            ) : (
+                              <span>{u.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                            )}
+                          </div>
+                          <span>{u.name}</span>
+                        </div>
+                      </td>
+                      <td>{u.email}</td>
+                      <td>
+                        <select
+                          value={u.role}
+                          onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                          disabled={u._id === user?._id}
+                          className="role-select"
+                        >
+                          <option value="member">Member</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select
+                          value={u.status}
+                          onChange={(e) => handleStatusChange(u._id, e.target.value)}
+                          disabled={u._id === user?._id}
+                          className={`status-select status-${u.status}`}
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </td>
+                      <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        {u._id !== user?._id && (
+                          <button
+                            onClick={() => handleDeleteUser(u._id)}
+                            className="action-btn delete"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {users.length === 0 && <p className="empty-state">No users found.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* POSTS TAB */}
+        {activeTab === 'posts' && (
+          <div className="tab-panel">
+            <div className="table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Image</th>
+                    <th>Author</th>
+                    <th>Description</th>
+                    <th>Likes</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {posts.map((post) => (
+                    <tr key={post._id}>
+                      <td>
+                        {post.image ? (
+                          <img src={post.image} alt="Post" className="post-thumb" />
+                        ) : (
+                          <div className="no-image">No img</div>
+                        )}
+                      </td>
+                      <td>
+                        <div className="user-cell">
+                          <div className="user-avatar small">
+                            {post.user?.profilePic ? (
+                              <img src={post.user.profilePic} alt={post.user.name} />
+                            ) : (
+                              <span>{post.user?.name?.charAt(0) || 'U'}</span>
+                            )}
+                          </div>
+                          <span>{post.user?.name || 'Unknown'}</span>
+                        </div>
+                      </td>
+                      <td className="post-desc">
+                        {post.description.length > 50
+                          ? `${post.description.substring(0, 50)}...`
+                          : post.description}
+                      </td>
+                      <td>{post.likes?.length || post.like?.length || 0}</td>
+                      <td>{new Date(post.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <button
+                          onClick={() => handleDeletePost(post._id)}
+                          className="action-btn delete"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {posts.length === 0 && <p className="empty-state">No posts yet.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* CONTACTS TAB */}
+        {activeTab === 'contacts' && (
+          <div className="tab-panel">
+            <div className="table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Subject</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.map((contact) => (
+                    <tr key={contact._id}>
+                      <td><strong>{contact.name}</strong></td>
+                      <td>{contact.email}</td>
+                      <td>{contact.subject}</td>
+                      <td className="contact-message">
+                        {contact.message.length > 60
+                          ? `${contact.message.substring(0, 60)}...`
+                          : contact.message}
+                      </td>
+                      <td>
+                        <select
+                          value={contact.status}
+                          onChange={(e) => handleUpdateContactStatus(contact._id, e.target.value)}
+                          className={`status-select status-${contact.status}`}
+                        >
+                          <option value="new">New</option>
+                          <option value="read">Read</option>
+                          <option value="replied">Replied</option>
+                          <option value="archived">Archived</option>
+                        </select>
+                      </td>
+                      <td>{new Date(contact.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <button
+                          onClick={() => handleDeleteContact(contact._id)}
+                          className="action-btn delete"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {contacts.length === 0 && <p className="empty-state">No contact messages.</p>}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

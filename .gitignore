@@ -105,6 +105,10 @@ backend/uploads/*
 frontend/uploads/*
 !frontend/uploads/.gitkeep
 
+# Seed/scripts with sensitive data
+seed-*.js
+admin-creds.txt
+
 # Database
 *.sqlite
 *.db

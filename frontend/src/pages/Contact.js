@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axiosInstance from '../api/axios';
 import './Contact.css';
 
 function Contact() {
@@ -10,6 +11,7 @@ function Contact() {
   });
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -38,13 +40,22 @@ function Contact() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (validateForm()) {
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    try {
+      await axiosInstance.post('/contacts', formData);
       setShowSuccess(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
       setTimeout(() => setShowSuccess(false), 10000);
+    } catch (err) {
+      alert('Failed to send message. Please try again.');
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -95,8 +106,10 @@ function Contact() {
                 <i className="fas fa-check-circle"></i> Message sent successfully! We'll get back to you within 24-48 hours.
               </div>
             )}
-            
-            <button type="submit"><i className="fas fa-paper-plane"></i> Send Message</button>
+
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Sending...' : <><i className="fas fa-paper-plane"></i> Send Message</>}
+            </button>
           </form>
         </div>
         

@@ -2,6 +2,11 @@
 
 Deploy PrideFitGym to production with Vercel (frontend) and Render (backend).
 
+## Current Deployments
+
+- **Frontend:** https://web-prog-gymnation-ten.vercel.app
+- **Backend:** https://web-prog-gymnation.onrender.com
+
 ## Prerequisites
 
 - GitHub repository with your code pushed
@@ -31,10 +36,10 @@ NODE_ENV=production
 PORT=10000
 
 # CORS Origin (your Vercel frontend URL - set after deploying frontend)
-CORS_ORIGIN=https://your-app.vercel.app
+CORS_ORIGIN=https://web-prog-gymnation-ten.vercel.app
 
-# Base URL (your Render backend URL - will be something like https://your-backend.onrender.com)
-BASE_URL=https://your-backend.onrender.com
+# Base URL (your Render backend URL)
+BASE_URL=https://web-prog-gymnation.onrender.com
 
 # Optional: Cloudinary for file uploads (recommended for production)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -52,10 +57,10 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 In your Vercel project settings, set:
 
 ```env
-REACT_APP_API_URL=https://your-backend.onrender.com/api
+REACT_APP_API_URL=https://web-prog-gymnation.onrender.com/api
 ```
 
-**Note:** Replace `your-backend.onrender.com` with your actual Render backend URL after deployment.
+**Note:** This is already configured with your deployed Render backend URL.
 
 ---
 
@@ -86,7 +91,7 @@ REACT_APP_API_URL=https://your-backend.onrender.com/api
 **Important:**
 - Add your MongoDB Atlas connection string to `MONGODB_URI`
 - Set `CORS_ORIGIN` to your Vercel frontend URL (deploy frontend first, then update this)
-- Deploying will give you a URL like: `https://pridefit-backend.onrender.com`
+- Deploying will give you a URL like: `https://web-prog-gymnation.onrender.com`
 
 ---
 
@@ -118,10 +123,12 @@ vercel --prod
    - **Output Directory:** `build`
 5. Add environment variable:
    - **Key:** `REACT_APP_API_URL`
-   - **Value:** `https://your-backend.onrender.com/api` (use your actual Render URL)
+   - **Value:** `https://web-prog-gymnation.onrender.com/api`
 6. Click **Deploy**
 
 Vercel will automatically detect `vercel.json` configuration.
+
+**Frontend will be available at:** `https://web-prog-gymnation-ten.vercel.app`
 
 ---
 
@@ -129,10 +136,11 @@ Vercel will automatically detect `vercel.json` configuration.
 
 After both deployments:
 
-1. Get your Vercel frontend URL (e.g., `https://pridefit.vercel.app`)
-2. Go to Render dashboard → your backend service → **Environment** tab
-3. Update `CORS_ORIGIN` to match your Vercel URL
-4. Redeploy backend or manually trigger rebuild
+1. Your Vercel frontend URL: `https://web-prog-gymnation-ten.vercel.app`
+2. Your Render backend URL: `https://web-prog-gymnation.onrender.com`
+3. Go to Render dashboard → your backend service → **Environment** tab
+4. Ensure `CORS_ORIGIN` is set to: `https://web-prog-gymnation-ten.vercel.app`
+5. Redeploy backend or manually trigger rebuild
 
 **Alternative:** Set `CORS_ORIGIN=*` for testing (not recommended for production).
 
@@ -163,8 +171,8 @@ Files will automatically upload to Cloudinary instead of local storage.
 
 ## Step 6: Verify Deployment
 
-1. **Frontend:** Visit `https://your-app.vercel.app` - should load React app
-2. **Backend:** Visit `https://your-backend.onrender.com/api` - should show API message
+1. **Frontend:** Visit `https://web-prog-gymnation-ten.vercel.app` - should load React app
+2. **Backend:** Visit `https://web-prog-gymnation.onrender.com/api` - should show API message
 3. **Test Registration:** Create a user account
 4. **Test Uploads:** Upload a profile picture and create a post with image
 5. **Check Logs:** Use Render logs to debug any issues
@@ -176,7 +184,7 @@ Files will automatically upload to Cloudinary instead of local storage.
 - [ ] Change `JWT_SECRET` to a strong random value
 - [ ] Enable MongoDB Atlas IP whitelist or allow all (0.0.0.0/0) temporarily
 - [ ] Set `NODE_ENV=production` (already in render.yaml)
-- [ ] Update `CORS_ORIGIN` to your Vercel URL
+- [ ] Update `CORS_ORIGIN` to: `https://web-prog-gymnation-ten.vercel.app`
 - [ ] Configure Cloudinary for file uploads (recommended)
 - [ ] Test all features: auth, profile, posts, comments, admin
 - [ ] Monitor Render logs for errors
@@ -205,8 +213,8 @@ Then update environment variables:
 ## Troubleshooting
 
 ### Images not loading
-- Check `BASE_URL` in Render environment matches your backend URL
-- Verify CORS allows your frontend domain
+- Check `BASE_URL` in Render environment matches your backend URL: `https://web-prog-gymnation.onrender.com`
+- Verify CORS allows your frontend domain: `https://web-prog-gymnation-ten.vercel.app`
 - Ensure Cloudinary credentials are correct (if using Cloudinary)
 
 ### 401 Unauthorized

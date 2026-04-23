@@ -7,7 +7,7 @@ services:
     env: node
     plan: free
     
-    # Build: install all dependencies (including dev for building)
+    # Build: install all dependencies
     buildCommand: "cd backend && npm install"
     
     # Start: run production server
@@ -21,16 +21,15 @@ services:
         value: production
       - key: PORT
         value: 10000
-      # Set these in Render dashboard (do not commit secrets):
-      # - key: MONGODB_URI
-      #   value: mongodb+srv://<user>:<pass>@cluster.mongodb.net/pridefitgym?retryWrites=true&w=majority
-      # - key: JWT_SECRET
-      #   generateValue: true
-      # - key: CORS_ORIGIN
-      #   value: https://your-app.vercel.app
-      # - key: BASE_URL
-      #   value: https://your-backend.onrender.com
-      # Optional: Cloudinary for persistent file storage
+      - key: MONGODB_URI
+        value: mongodb://marcdarylladress_db_user:WmY8YKVUcoLNd1Y0@cluster0.u1mmbmk.mongodb.net:27017/pridefitgym?retryWrites=true&w=majority&ssl=true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://web-prog-gymnation-ten.vercel.app
+      - key: BASE_URL
+        value: https://web-prog-gymnation.onrender.com
+      # Optional: Cloudinary for persistent file storage (uncomment to enable)
       # - key: CLOUDINARY_CLOUD_NAME
       #   value: your-cloud-name
       # - key: CLOUDINARY_API_KEY

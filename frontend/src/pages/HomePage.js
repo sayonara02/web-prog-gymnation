@@ -2,26 +2,41 @@ import { useState, useEffect } from 'react';
 import axiosInstance from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { getImageUrl } from '../utils/imageUrl';
+import './HomePage.css';
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [commentInputs, setCommentInputs] = useState({});
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
+  const [loadingMore, setLoadingMore] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchPosts();
+    fetchPosts(1);
   }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (page = 1) => {
     try {
-      const res = await axiosInstance.get('/posts');
-      setPosts(res.data.posts);
+      const currentLimit = pagination.limit || 10;
+      const res = await axiosInstance.get('/posts', { params: { page, limit: currentLimit } });
+      if (page === 1) {
+        setPosts(res.data.posts);
+      } else {
+        setPosts(prev => [...prev, ...res.data.posts]);
+      }
+      setPagination(prev => ({ ...prev, ...res.data.pagination }));
     } catch (err) {
       console.error('Error fetching posts:', err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    fetchPosts(pagination.page + 1);
   };
 
   const handleCommentSubmit = async (postId) => {
@@ -55,6 +70,7 @@ const HomePage = () => {
     try {
       await axiosInstance.delete(`/posts/${postId}`);
       setPosts((prev) => prev.filter((post) => post._id !== postId));
+      setPagination(prev => ({ ...prev, total: prev.total - 1 }));
     } catch (err) {
       console.error('Error deleting post:', err);
       alert('Failed to delete post');
@@ -62,7 +78,27 @@ const HomePage = () => {
   };
 
   if (loading) {
-    return <div>Loading posts...</div>;
+    return (
+      <div className="home-page" style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <h1>Community Feed</h1>
+        <div className="skeleton-grid">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="skeleton-post">
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+                <div className="skeleton-avatar"></div>
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton-line" style={{ width: '120px', height: '16px' }}></div>
+                  <div className="skeleton-line" style={{ width: '80px', height: '12px', marginTop: '5px' }}></div>
+                </div>
+              </div>
+              <div className="skeleton-line" style={{ width: '100%', height: '200px', marginBottom: '15px' }}></div>
+              <div className="skeleton-line" style={{ width: '100%', height: '16px' }}></div>
+              <div className="skeleton-line" style={{ width: '60%', height: '16px', marginTop: '10px' }}></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -98,13 +134,14 @@ const HomePage = () => {
                   marginRight: '10px',
                 }}
               >
-                 {post.user?.profilePic ? (
-                   <img
-                     src={getImageUrl(post.user.profilePic)}
-                     alt={post.user.name}
-                     style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-                   />
-                 ) : (
+                  {post.user?.profilePic ? (
+                    <img
+                      src={getImageUrl(post.user.profilePic)}
+                      alt={post.user.name}
+                      loading="lazy"
+                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : (
                   <span>{post.user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
                 )}
               </div>
@@ -122,12 +159,16 @@ const HomePage = () => {
                 <img
                   src={getImageUrl(post.image)}
                   alt="Post"
+                  loading="lazy"
                   style={{
                     width: '100%',
                     maxHeight: '500px',
                     objectFit: 'cover',
                     borderRadius: '8px',
+                    background: '#f0f0f0',
+                    transition: 'opacity 0.3s ease',
                   }}
+                  onLoad={(e) => { e.target.style.opacity = '1'; }}
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.style.display = 'none';
@@ -234,6 +275,48 @@ const HomePage = () => {
             </div>
           </div>
         ))
+      )}
+
+      {/* Load More Button */}
+      {pagination.pages > 1 && pagination.page < pagination.pages && !loadingMore && (
+        <div style={{ textAlign: 'center', margin: '2rem 0' }}>
+          <button
+            onClick={handleLoadMore}
+            style={{
+              padding: '12px 30px',
+              background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 4px 12px rgba(78, 205, 196, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = 'none';
+            }}
+          >
+            Load More Posts
+          </button>
+        </div>
+      )}
+
+      {loadingMore && (
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p>Loading more posts...</p>
+        </div>
+      )}
+
+      {pagination.pages > 1 && pagination.page >= pagination.pages && (
+        <p style={{ textAlign: 'center', color: '#999', margin: '2rem 0' }}>
+          You've reached the end
+        </p>
       )}
     </div>
   );

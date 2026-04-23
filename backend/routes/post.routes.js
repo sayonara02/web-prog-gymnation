@@ -8,18 +8,25 @@ const { uploadPost, deleteFile } = require('../utils/upload');
 const path = require('path');
 
 // @GET    /api/posts
-// Get all posts with comments and user info
+// Get all posts with comments and user info (with pagination)
 router.get('/', async (req, res) => {
   try {
-    // Fetch all posts with user info
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Fetch posts with pagination
     const posts = await Post.find()
       .populate('user', 'name profilePic')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    // Get all post IDs
+    // Get all post IDs for these posts
     const postIds = posts.map(post => post._id);
 
-    // Fetch all comments for these posts in one query
+    // Fetch comments for these posts only
     const comments = await Comment.find({ post: { $in: postIds } })
       .populate('user', 'name profilePic')
       .sort({ createdAt: -1 });
@@ -36,11 +43,23 @@ router.get('/', async (req, res) => {
 
     // Attach comments to posts
     const postsWithComments = posts.map(post => ({
-      ...post.toObject(),
+      ...post,
       comments: commentsByPost[post._id.toString()] || [],
     }));
 
-    res.json({ success: true, posts: postsWithComments });
+    // Get total count for pagination
+    const total = await Post.countDocuments();
+
+    res.json({ 
+      success: true, 
+      posts: postsWithComments,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     console.error('Error fetching posts:', err);
     res.status(500).json({

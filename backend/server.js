@@ -59,8 +59,13 @@ console.log('6. Middleware configured');
 
 // Serve static files (only needed if using local storage)
 if (!process.env.CLOUDINARY_CLOUD_NAME) {
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-  console.log('7. Static files configured');
+  // Cache static files (images) for 1 day
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    etag: true,
+    lastModified: true,
+  }));
+  console.log('7. Static files configured with caching (1 day)');
 } else {
   console.log('7. Using Cloudinary for file storage - skipping local static serving');
 }

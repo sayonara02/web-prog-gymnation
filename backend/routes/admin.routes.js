@@ -10,7 +10,7 @@ const { protect, admin } = require('../middleware/auth.middleware');
 // Get all users (admin only)
 router.get('/users', protect, admin, async (req, res) => {
   try {
-    const users = await User.find().select('-password');
+    const users = await User.find().lean().select('-password');
     res.json({ success: true, users });
   } catch (err) {
     res.status(500).json({
@@ -37,7 +37,7 @@ router.put('/users/:id/role', protect, admin, async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { $set: { role } },
-      { new: true }
+      { new: true, lean: true }
     ).select('-password');
 
     if (!user) {
@@ -77,7 +77,7 @@ router.put('/users/:id/status', protect, admin, async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { $set: { status } },
-      { new: true }
+      { new: true, lean: true }
     ).select('-password');
 
     if (!user) {
@@ -142,13 +142,32 @@ router.delete('/users/:id', protect, admin, async (req, res) => {
 });
 
 // @GET    /api/admin/posts
-// Get all posts with user info (admin only)
+// Get all posts with user info (admin only) - pagination supported
 router.get('/posts', protect, admin, async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
     const posts = await Post.find()
       .populate('user', 'name email profilePic')
-      .sort({ createdAt: -1 });
-    res.json({ success: true, posts });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Post.countDocuments();
+
+    res.json({ 
+      success: true, 
+      posts,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     res.status(500).json({
       success: false,
@@ -190,7 +209,7 @@ router.delete('/posts/:id', protect, admin, async (req, res) => {
 // Get all contact messages (admin only)
 router.get('/contacts', protect, admin, async (req, res) => {
   try {
-    const contacts = await Contact.find().sort({ createdAt: -1 });
+    const contacts = await Contact.find().sort({ createdAt: -1 }).lean();
     res.json({ success: true, contacts });
   } catch (err) {
     res.status(500).json({

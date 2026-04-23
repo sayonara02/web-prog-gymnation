@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axiosInstance from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { getImageUrl } from '../utils/imageUrl';
 import './AdminPage.css';
 
 const AdminPage = () => {
@@ -13,6 +14,7 @@ const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [postPagination, setPostPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 });
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -24,11 +26,12 @@ const AdminPage = () => {
     try {
       const [usersRes, postsRes, contactsRes] = await Promise.all([
         axiosInstance.get('/admin/users'),
-        axiosInstance.get('/admin/posts'),
+        axiosInstance.get('/admin/posts', { params: { page: postPagination.page, limit: postPagination.limit } }),
         axiosInstance.get('/admin/contacts'),
       ]);
       setUsers(usersRes.data.users);
       setPosts(postsRes.data.posts);
+      setPostPagination(prev => ({ ...prev, ...postsRes.data.pagination }));
       setContacts(contactsRes.data.contacts);
     } catch (err) {
       console.error('Error fetching admin data:', err);
@@ -36,6 +39,20 @@ const AdminPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPosts = async (page = 1) => {
+    try {
+      const res = await axiosInstance.get('/admin/posts', { params: { page, limit: postPagination.limit } });
+      setPosts(res.data.posts);
+      setPostPagination(prev => ({ ...prev, ...res.data.pagination }));
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    fetchPosts(newPage);
   };
 
   const showMessage = (text, type = 'success') => {
@@ -222,7 +239,7 @@ const AdminPage = () => {
                         <div className="user-cell">
                           <div className="user-avatar">
                             {u.profilePic ? (
-                              <img src={u.profilePic} alt={u.name} />
+                              <img src={getImageUrl(u.profilePic)} alt={u.name} loading="lazy" />
                             ) : (
                               <span>{u.name?.charAt(0)?.toUpperCase() || 'U'}</span>
                             )}
@@ -291,18 +308,18 @@ const AdminPage = () => {
                 <tbody>
                   {posts.map((post) => (
                     <tr key={post._id}>
-                      <td>
-                        {post.image ? (
-                          <img src={post.image} alt="Post" className="post-thumb" />
-                        ) : (
-                          <div className="no-image">No img</div>
-                        )}
-                      </td>
+                       <td>
+                         {post.image ? (
+                           <img src={getImageUrl(post.image)} alt="Post" className="post-thumb" loading="lazy" />
+                         ) : (
+                           <div className="no-image">No img</div>
+                         )}
+                       </td>
                       <td>
                         <div className="user-cell">
                           <div className="user-avatar small">
                             {post.user?.profilePic ? (
-                              <img src={post.user.profilePic} alt={post.user.name} />
+                              <img src={getImageUrl(post.user.profilePic)} alt={post.user.name} loading="lazy" />
                             ) : (
                               <span>{post.user?.name?.charAt(0) || 'U'}</span>
                             )}
@@ -329,7 +346,30 @@ const AdminPage = () => {
                   ))}
                 </tbody>
               </table>
-              {posts.length === 0 && <p className="empty-state">No posts yet.</p>}
+              {posts.length === 0 ? (
+                <p className="empty-state">No posts yet.</p>
+              ) : (
+                <div className="pagination-controls">
+                  <button
+                    onClick={() => handlePageChange(postPagination.page - 1)}
+                    disabled={postPagination.page <= 1}
+                    className="pagination-btn"
+                  >
+                    ← Previous
+                  </button>
+                  <span className="pagination-info">
+                    Page {postPagination.page} of {postPagination.pages} 
+                    ({postPagination.total} total posts)
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(postPagination.page + 1)}
+                    disabled={postPagination.page >= postPagination.pages}
+                    className="pagination-btn"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

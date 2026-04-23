@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
+const User = require('./models/User');
 
 console.log('1. Starting server...');
 
@@ -71,7 +72,36 @@ mongoose.connect(mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
+.then(async () => {
+    console.log('✅ MongoDB connected successfully');
+    
+    // Create default admin user if none exists
+    try {
+        const adminExists = await User.findOne({ role: 'admin' });
+        if (!adminExists) {
+            // Password will be auto-hashed by User.pre('save') hook
+            const admin = new User({
+                name: 'Admin',
+                email: 'admin@pridefitgym.com',
+                password: 'Admin@2024',
+                role: 'admin',
+                status: 'active',
+                bio: 'System Administrator - PrideFitGym',
+                profilePic: '',
+            });
+            
+            await admin.save();
+            console.log('✅ Default admin user created');
+            console.log('📧 Email: admin@pridefitgym.com');
+            console.log('🔑 Password: Admin@2024');
+            console.log('⚠️  Change this password immediately after first login!');
+        } else {
+            console.log('✅ Admin user already exists');
+        }
+    } catch (err) {
+        console.error('❌ Error creating admin user:', err.message);
+    }
+})
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // Routes

@@ -117,55 +117,5 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// @POST   /api/auth/create-admin
-// TEMPORARY: Create default admin user (remove after first use)
-router.post('/create-admin', async (req, res) => {
-  try {
-    const User = require('../models/User');
-    const bcrypt = require('bcryptjs');
-
-    // Check if admin already exists
-    const existingAdmin = await User.findOne({ email: 'admin@pridefitgym.com' });
-    if (existingAdmin) {
-      return res.status(400).json({
-        success: false,
-        message: 'Admin user already exists',
-      });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash('Admin@2024', salt);
-
-    // Create admin user
-    const admin = new User({
-      name: 'Admin',
-      email: 'admin@pridefitgym.com',
-      password: hashedPassword,
-      role: 'admin',
-      status: 'active',
-      bio: 'System Administrator - PrideFitGym',
-      profilePic: '',
-    });
-
-    await admin.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Admin user created successfully',
-      credentials: {
-        email: 'admin@pridefitgym.com',
-        password: 'Admin@2024',
-      },
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create admin',
-      error: err.message,
-    });
-  }
-});
-
 module.exports = router;
 

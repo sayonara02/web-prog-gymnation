@@ -146,57 +146,7 @@ After both deployments:
 
 ---
 
-## Step 5: Create Admin User
-
-After backend is deployed and running:
-
-### Using Temporary Endpoint (Easiest)
-
-1. Deploy backend to Render (with MongoDB connected)
-2. Once deployed, run:
-   ```bash
-   curl -X POST https://web-prog-gymnation.onrender.com/api/auth/create-admin
-   ```
-3. Response will contain admin credentials:
-   ```json
-   {
-     "success": true,
-     "credentials": {
-       "email": "admin@pridefitgym.com",
-       "password": "Admin@2024"
-     }
-   }
-   ```
-4. **IMPORTANT:** After creating admin, **remove the `/create-admin` route** from `backend/routes/auth.routes.js` and redeploy immediately for security.
-
-**Alternative:** Create admin directly in MongoDB Atlas (see ADMIN_CREDENTIALS.md).
-
----
-
-## Step 6: Optional - Cloudinary Setup for File Uploads
-
-Render's filesystem is **ephemeral** - uploaded files are lost on redeploy. Use Cloudinary for persistent storage.
-
-### Set Up Cloudinary:
-
-1. Sign up at [cloudinary.com](https://cloudinary.com)
-2. Get your credentials from Dashboard:
-   - Cloud Name
-   - API Key
-   - API Secret
-3. Add to Render environment variables:
-   ```
-   CLOUDINARY_CLOUD_NAME=your_cloud_name
-   CLOUDINARY_API_KEY=your_api_key
-   CLOUDINARY_API_SECRET=your_api_secret
-   ```
-4. Redeploy backend
-
-Files will automatically upload to Cloudinary instead of local storage.
-
----
-
-## Step 7: Verify Deployment
+## Step 5: Verify Deployment
 
 1. **Frontend:** Visit `https://web-prog-gymnation-ten.vercel.app` - should load React app
 2. **Backend:** Visit `https://web-prog-gymnation.onrender.com/api` - should show API message
@@ -206,9 +156,8 @@ Files will automatically upload to Cloudinary instead of local storage.
 
 ---
 
-## Step 8: Post-Deployment Checklist
+## Step 6: Post-Deployment Checklist
 
-- [ ] Remove temporary `/api/auth/create-admin` route from code
 - [ ] Change `JWT_SECRET` to a strong random value
 - [ ] Enable MongoDB Atlas IP whitelist or allow all (0.0.0.0/0) temporarily
 - [ ] Set `NODE_ENV=production` (already in render.yaml)
@@ -220,7 +169,7 @@ Files will automatically upload to Cloudinary instead of local storage.
 
 ---
 
-## Step 9: Custom Domains (Optional)
+## Step 7: Custom Domains (Optional)
 
 ### Vercel (Frontend)
 1. Vercel Dashboard → Your Project → Settings → Domains
@@ -275,8 +224,7 @@ Then update environment variables:
 5. **Rate Limiting:** Consider adding express-rate-limit
 6. **Input Validation:** Already handled by Mongoose schemas
 7. **Secrets:** Never commit `.env` files (already in .gitignore)
-8. **Remove Test Endpoints:** Delete `/create-admin` route after use
-9. **Change Default Credentials:** Update admin password immediately
+8. **Change Default Credentials:** Update admin password immediately after first login
 
 ---
 
